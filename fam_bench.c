@@ -70,12 +70,12 @@ int main()
     FAMRequest fr;
     FAMEvent fe;
 
+    remove(test_file_name);
+
     if(FAMOpen(&fc) == -1) {
         printf("Error opening a FAM connection\n");
         exit(1);
     }
-
-    create_file(test_file_name);
 
     if(FAMMonitorFile(&fc, test_file_name, &fr, NULL) == -1) {
         printf("Error monitoring %s\n", test_file_name);
@@ -84,11 +84,26 @@ int main()
     }
 
     gettimeofday(&t1, NULL);
+    create_file(test_file_name);
+    while(!FAMNextEvent(&fc, &fe) && (fe.code != FAMCreated));
+    gettimeofday(&t2, NULL);
+
+    timeval_subtract(&diff, &t2, &t1);
+    printf("FAMCreated event delay : ");
+    print_timeval(&diff);
+    putchar('\n');
+
+    gettimeofday(&t1, NULL);
     modify_file(test_file_name);
     while(!FAMNextEvent(&fc, &fe) && (fe.code != FAMChanged));
     gettimeofday(&t2, NULL);
 
     timeval_subtract(&diff, &t2, &t1);
+
+    printf("FAMChanged event delay : ");
     print_timeval(&diff);
+    putchar('\n');
+
+    remove(test_file_name);
     return 0;
 }
